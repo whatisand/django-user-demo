@@ -74,3 +74,66 @@ class UsersTestCase(TestCase):
 
         return verify
 
+    def test_인증된_전화번호로_회원가입을_한다(self):
+        verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
+
+        res = self.client.post(
+            path="/users",
+            data={
+                "email": "andy@gggg.com",
+                "password": "123123",
+                "check_password": "123123",
+                "nickname": "test_nickname",
+                "name": "test_name",
+                "phone_number": verify.phone_number,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 201)
+        data = res.json()
+
+        user = User.objects.get(email=data['email'])
+
+        return user
+
+    def test_잘못된_정보로_로그인을_한다(self):
+        user = self.test_인증된_전화번호로_회원가입을_한다()
+        res = self.client.post(
+            path="/users/login",
+            data={
+                "email": user.email,
+                "password": "fail",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 401)
+
+    def test_잘못된_정보로_로그인을_한다(self):
+        res = self.client.post(
+            path="/users/login",
+            data={
+                "email": "andy@gggg.com",
+                "password": "fail",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 401)
+
+    def test_가입한_정보로_로그인을_한다(self):
+        user = self.test_인증된_전화번호로_회원가입을_한다()
+        res = self.client.post(
+            path="/users/login",
+            data={
+                "email": user.email,
+                "password": "123123",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 200)
+        return_user = User.objects.get(email=user.email)
+        return return_user
+
