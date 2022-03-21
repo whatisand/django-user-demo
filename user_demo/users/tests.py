@@ -137,3 +137,12 @@ class UsersTestCase(TestCase):
         return_user = User.objects.get(email=user.email)
         return return_user
 
+    def test_내_정보를_조회한다(self):
+        user = self.test_가입한_정보로_로그인을_한다()
+        self.client.force_login(user=user)
+        res = self.client.get(
+            path="/users",
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 200)
