@@ -35,7 +35,7 @@ class UsersTestCase(TestCase):
 
         self.assertEqual(res.status_code, 201)
         verify = UserVerify.objects.filter(
-            phone_number=phone_number,
+            phone_number="01046222847",
             verified=False,
             ).order_by("created_at").first()
         self.assertIsNotNone(verify)
