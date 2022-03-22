@@ -57,7 +57,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 400)
 
     def test_유효한_인증_번호로_전화번호_인증을_시도한다(self):
         verify = self.test_전화번호_인증을_요청한다()
@@ -70,7 +70,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
 
         return verify
 
@@ -108,7 +108,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 400)
 
     def test_잘못된_정보로_로그인을_한다(self):
         res = self.client.post(
@@ -133,7 +133,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 202)
         return_user = User.objects.get(email=user.email)
         return return_user
 
