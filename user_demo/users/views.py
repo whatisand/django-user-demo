@@ -58,7 +58,29 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
         model = UserVerify
         fields = ["phone_number"]
 
-# Create your views here.
+
+class UserVerifySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserVerify
+        fields = ["key", "phone_number", "verified"]
+        extra_kwargs = {
+            "key": {"write_only": True},
+            "verified": {"read_only": True},
+        }
+
+    def validate(self, data):
+        phone_number = data.get("phone_number")
+        key = data.get("key")
+
+        try:
+            verify = UserVerify.objects.filter(phone_number=phone_number, key=key, verified=False).select_for_update().get()
+        except UserVerify.DoesNotExist:
+            raise serializers.ValidationError("올바른 정보를 입력해주세요.")
+
+        return verify
+
+
 class UserLoginSerializer(serializers.Serializer):
 
     email = serializers.EmailField()
@@ -108,3 +130,34 @@ class UserLoginViews(APIView):
         login(request, user)
 
         return Response(serializer.data, status=202)
+
+
+class UserVerifyCreateViews(APIView):
+    queryset = UserVerify.objects.all()
+    serializer_class = UserVerifyCreateSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        # TODO: 인증 문자 보내는 부분 추가
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            verify = serializer.create(serializer.validated_data)
+
+        return Response(self.serializer_class(verify).data, status=201)
+
+
+class UserVerifyConfirmViews(APIView):
+    serializer_class = UserVerifySerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        verify = serializer.validated_data
+
+        # TODO: 요청 제한시간 검사해야 함
+        # TODO: 요청 횟수 제한 필요한가?
+        verify.verified = True
+
+        verify.save()
+
+        return Response({"Success"}, status=201)
