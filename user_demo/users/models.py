@@ -6,11 +6,13 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 class UserManager(BaseUserManager):
     def create_user(self, email, name, nickname, phone_number, password=None):
         if not phone_number:
-            raise ValueError('User must have phone number')
+            raise ValueError("User must have phone number")
         if not email:
-            raise ValueError('User must have user email')
+            raise ValueError("User must have user email")
 
-        if not UserVerify.objects.filter(phone_number=phone_number, verified=True).exists():
+        if not UserVerify.objects.filter(
+            phone_number=phone_number, verified=True
+        ).exists():
             # TODO: 전화번호 인증 로직 개선 필요
             raise ValueError("전화번호 인증이 필요합니다.")
 
@@ -18,7 +20,7 @@ class UserManager(BaseUserManager):
             name=name,
             email=self.normalize_email(email),
             nickname=nickname,
-            phone_number=phone_number.replace("-","")
+            phone_number=phone_number.replace("-", ""),
         )
         user.set_password(password)
         user.is_active = True
@@ -31,7 +33,7 @@ class UserManager(BaseUserManager):
             email=self.normalize_email(email),
             nickname=nickname,
             phone_number=phone_number,
-            password=password
+            password=password,
         )
         user.is_admin = True
         user.save(using=self._db)
@@ -39,19 +41,23 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    phoneNumberRegex = RegexValidator(regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})")
+    phoneNumberRegex = RegexValidator(
+        regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})"
+    )
 
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255, null=True)
     nickname = models.CharField(max_length=255, null=True)
-    phone_number = models.CharField(max_length=20, unique=True, validators=[phoneNumberRegex])
+    phone_number = models.CharField(
+        max_length=20, unique=True, validators=[phoneNumberRegex]
+    )
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['phone_number']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["phone_number"]
 
     class Meta:
         db_table = "user"
@@ -59,7 +65,9 @@ class User(AbstractBaseUser):
 
 
 class UserVerify(models.Model):
-    phoneNumberRegex = RegexValidator(regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})")
+    phoneNumberRegex = RegexValidator(
+        regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})"
+    )
 
     phone_number = models.CharField(max_length=20, validators=[phoneNumberRegex])
     key = models.IntegerField()

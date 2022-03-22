@@ -3,7 +3,11 @@ import random
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import GenericAPIView, CreateAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import (
+    GenericAPIView,
+    CreateAPIView,
+    RetrieveDestroyAPIView,
+)
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -14,10 +18,11 @@ from users.models import User, UserVerify
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     def create(self, validated_data):
 
-        if not UserVerify.objects.filter(phone_number=validated_data.get("phone_number")).exists():
+        if not UserVerify.objects.filter(
+            phone_number=validated_data.get("phone_number")
+        ).exists():
             raise serializers.ValidationError("전화번호 인증이 필요합니다.")
 
         user = User.objects.create_user(
@@ -39,18 +44,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ["email", "name", "nickname", "phone_number"]
 
 
 class UserVerifyCreateSerializer(serializers.ModelSerializer):
-    phoneNumberRegex = RegexValidator(regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})$")
+    phoneNumberRegex = RegexValidator(
+        regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})$"
+    )
     phone_number = serializers.CharField(validators=[phoneNumberRegex])
 
     def create(self, validated_data):
-        validated_data["phone_number"] = validated_data["phone_number"].replace("-","")
+        validated_data["phone_number"] = validated_data["phone_number"].replace("-", "")
         validated_data["key"] = random.randint(100000, 999999)
         return super().create(validated_data)
 
@@ -60,7 +66,6 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
 
 
 class UserVerifySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = UserVerify
         fields = ["key", "phone_number", "verified"]
@@ -74,7 +79,13 @@ class UserVerifySerializer(serializers.ModelSerializer):
         key = data.get("key")
 
         try:
-            verify = UserVerify.objects.filter(phone_number=phone_number, key=key, verified=False).select_for_update().get()
+            verify = (
+                UserVerify.objects.filter(
+                    phone_number=phone_number, key=key, verified=False
+                )
+                .select_for_update()
+                .get()
+            )
         except UserVerify.DoesNotExist:
             raise serializers.ValidationError("올바른 정보를 입력해주세요.")
 
