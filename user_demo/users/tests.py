@@ -99,6 +99,8 @@ class UsersTestCase(TestCase):
 
         user = User.objects.get(email=data['email'])
 
+        self.assertIsNotNone(user)
+
         return user
 
     def test_잘못된_정보로_로그인을_한다(self):
