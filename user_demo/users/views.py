@@ -59,6 +59,26 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
         fields = ["phone_number"]
 
 # Create your views here.
+class UserLoginSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        fields = ["email", "password"]
+
+    def validate(self, data):
+        email = data.get("email", None)
+        password = data.get("password", None)
+
+        user = authenticate(username=email, password=password)
+
+        if user is None:
+            raise serializers.ValidationError("유저 정보가 없습니다.")
+
+        return user
+
+
 class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -74,3 +94,17 @@ class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
             return Response(data={"message: User not exist"}, status=404)
 
         return Response(UserSerializer(user).data, status=200)
+
+
+class UserLoginViews(APIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data
+        login(request, user)
+
+        return Response(serializer.data, status=202)
