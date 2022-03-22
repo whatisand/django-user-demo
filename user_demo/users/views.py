@@ -1,3 +1,174 @@
-from django.shortcuts import render
+import random
 
-# Create your views here.
+from django.core.validators import RegexValidator
+from rest_framework import serializers
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import (
+    GenericAPIView,
+    CreateAPIView,
+    RetrieveDestroyAPIView,
+)
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import authenticate, login, logout
+
+from users.models import User, UserVerify
+
+
+class UserSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+
+        if not UserVerify.objects.filter(
+            phone_number=validated_data.get("phone_number")
+        ).exists():
+            raise serializers.ValidationError("전화번호 인증이 필요합니다.")
+
+        user = User.objects.create_user(
+            email=validated_data.get("email"),
+            nickname=validated_data.get("nickname"),
+            name=validated_data.get("name"),
+            phone_number=validated_data.get("phone_number"),
+            password=validated_data.get("password"),
+        )
+
+        return user
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "name", "nickname", "phone_number", "password"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "name", "nickname", "phone_number"]
+
+
+class UserVerifyCreateSerializer(serializers.ModelSerializer):
+    phoneNumberRegex = RegexValidator(
+        regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})$"
+    )
+    phone_number = serializers.CharField(validators=[phoneNumberRegex])
+
+    def create(self, validated_data):
+        validated_data["phone_number"] = validated_data["phone_number"].replace("-", "")
+        validated_data["key"] = random.randint(100000, 999999)
+        return super().create(validated_data)
+
+    class Meta:
+        model = UserVerify
+        fields = ["phone_number"]
+
+
+class UserVerifySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserVerify
+        fields = ["key", "phone_number", "verified"]
+        extra_kwargs = {
+            "key": {"write_only": True},
+            "verified": {"read_only": True},
+        }
+
+    def validate(self, data):
+        phone_number = data.get("phone_number")
+        key = data.get("key")
+
+        try:
+            verify = (
+                UserVerify.objects.filter(
+                    phone_number=phone_number, key=key, verified=False
+                )
+                .select_for_update()
+                .get()
+            )
+        except UserVerify.DoesNotExist:
+            raise serializers.ValidationError("올바른 정보를 입력해주세요.")
+
+        return verify
+
+
+class UserLoginSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        fields = ["email", "password"]
+
+    def validate(self, data):
+        email = data.get("email", None)
+        password = data.get("password", None)
+
+        user = authenticate(username=email, password=password)
+
+        if user is None:
+            raise serializers.ValidationError("유저 정보가 없습니다.")
+
+        return user
+
+
+class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response(data={"message: Login Required"}, status=401)
+
+        user = User.objects.filter(email=request.user.email).get()
+
+        if user is None:
+            return Response(data={"message: User not exist"}, status=404)
+
+        return Response(UserSerializer(user).data, status=200)
+
+
+class UserLoginViews(APIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data
+        login(request, user)
+
+        return Response(serializer.data, status=202)
+
+
+class UserVerifyCreateViews(APIView):
+    queryset = UserVerify.objects.all()
+    serializer_class = UserVerifyCreateSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        # TODO: 인증 문자 보내는 부분 추가
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            verify = serializer.create(serializer.validated_data)
+
+        return Response(self.serializer_class(verify).data, status=201)
+
+
+class UserVerifyConfirmViews(APIView):
+    serializer_class = UserVerifySerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        verify = serializer.validated_data
+
+        # TODO: 요청 제한시간 검사해야 함
+        # TODO: 요청 횟수 제한 필요한가?
+        verify.verified = True
+
+        verify.save()
+
+        return Response({"Success"}, status=201)
