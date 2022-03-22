@@ -94,15 +94,44 @@ class UserVerifySerializer(serializers.ModelSerializer):
 
 class UserLoginSerializer(serializers.Serializer):
 
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False)
+    key = serializers.IntegerField(required=False, write_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        fields = ["email", "password"]
+        fields = ["email", "password", "phone_number", "key"]
 
     def validate(self, data):
         email = data.get("email", None)
         password = data.get("password", None)
+        phone_number = data.get("phone_number", None)
+        key = data.get("key", None)
+
+        # TODO: 리펙토링
+
+        if email is None and phone_number is not None:
+            phone_number = data.get("phone_number").replace("-", "")
+            user = User.objects.filter(phone_number=phone_number).first()
+            email = user.email
+
+        if phone_number is not None and key is not None:
+            phone_number = data.get("phone_number").replace("-", "")
+            verify = UserVerify.objects.filter(
+                phone_number=phone_number, key=key
+            ).first()
+            if verify is not None:
+                user = User.objects.filter(phone_number=verify.phone_number).first()
+                return user
+
+        if email is not None and key is not None:
+            user = User.objects.get(email=email)
+            verify = UserVerify.objects.filter(
+                phone_number=user.phone_number, key=key
+            ).first()
+            if verify is not None:
+                user = User.objects.filter(phone_number=verify.phone_number).first()
+                return user
 
         user = authenticate(username=email, password=password)
 
