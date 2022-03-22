@@ -264,3 +264,19 @@ class UsersTestCase(TestCase):
         )
 
         self.assertEqual(login_with_new_res.status_code, 202)
+
+    def test_유효하지_않은_인증번호로_비밀번호_찾기를_요청한다(self):
+        user = self.test_인증된_전화번호로_회원가입을_한다()
+        verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
+        new_password = "new_password"
+        res = self.client.post(
+            path="/find-password",
+            data={
+                "email": user.email,
+                "password": new_password,
+                "key": "1111",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 400)
