@@ -15,10 +15,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from users.views import UserViewSet, UserVerifyCreateViews, UserLoginViews, UserVerifyConfirmViews
+from users.views import (
+    UserViewSet,
+    UserVerifyCreateViews,
+    UserLoginViews,
+    UserVerifyConfirmViews,
+    UserFindPasswordViews,
+)
 
 urlpatterns = [
-    path("auth/", include('rest_framework.urls')),
+    path("auth/", include("rest_framework.urls")),
     path("admin", admin.site.urls),
     path("users", UserViewSet.as_view()),
     # path("users/<str:pk>", UserViewSet.as_view({
@@ -26,7 +32,8 @@ urlpatterns = [
     #     "patch": "update",
     #     "delete": "destroy",
     # })),
-    path('users/verify', UserVerifyCreateViews.as_view()),
-    path('users/verify/confirm', UserVerifyConfirmViews.as_view()),
-    path('login', UserLoginViews.as_view()),
+    path("users/verify", UserVerifyCreateViews.as_view()),
+    path("users/verify/confirm", UserVerifyConfirmViews.as_view()),
+    path("login", UserLoginViews.as_view()),
+    path("find-password", UserFindPasswordViews.as_view()),
 ]
