@@ -49,7 +49,7 @@ class UsersTestCase(TestCase):
 
     def test_잘못된_인증_번호로_전화번호_인증을_시도한다(self):
         res = self.client.post(
-            path="/users/verify",
+            path="/users/verify/confirm",
             data={
                 "phone_number": "010-4622-2847",
                 "key": "123123"
@@ -100,7 +100,7 @@ class UsersTestCase(TestCase):
     def test_잘못된_정보로_로그인을_한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
         res = self.client.post(
-            path="/users/login",
+            path="/login",
             data={
                 "email": user.email,
                 "password": "fail",
@@ -125,7 +125,7 @@ class UsersTestCase(TestCase):
     def test_가입한_정보로_로그인을_한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
         res = self.client.post(
-            path="/users/login",
+            path="/login",
             data={
                 "email": user.email,
                 "password": "123123",
