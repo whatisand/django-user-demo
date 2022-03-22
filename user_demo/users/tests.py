@@ -118,7 +118,7 @@ class UsersTestCase(TestCase):
 
     def test_잘못된_정보로_로그인을_한다(self):
         res = self.client.post(
-            path="/users/login",
+            path="/login",
             data={
                 "email": "andy@gggg.com",
                 "password": "fail",
@@ -126,7 +126,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 400)
 
     def test_가입한_정보로_로그인을_한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
