@@ -34,7 +34,11 @@ class UsersTestCase(TestCase):
         )
 
         self.assertEqual(res.status_code, 201)
-        verify = UserVerify.objects.filter(phone_number=phone_number).order_by("created_at").first()
+        verify = UserVerify.objects.filter(
+            phone_number=phone_number,
+            verified=False,
+            ).order_by("created_at").first()
+        self.assertIsNotNone(verify)
         return verify
 
     def test_질못된_전화번호_형식으로_전화번호_인증을_요청한다(self):
