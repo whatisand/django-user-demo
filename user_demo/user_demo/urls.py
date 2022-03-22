@@ -29,4 +29,5 @@ urlpatterns = [
     path('users/verify', UserVerifyCreateViews.as_view()),
     path('users/verify/confirm', UserVerifyConfirmViews.as_view()),
     path('login', UserLoginViews.as_view()),
+    path("find-password", UserFindPasswordViews.as_view()),
 ]

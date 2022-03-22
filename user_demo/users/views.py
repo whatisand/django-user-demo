@@ -141,6 +141,40 @@ class UserLoginSerializer(serializers.Serializer):
         return user
 
 
+class UserFindPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+    key = serializers.IntegerField()
+
+    class Meta:
+        fields = ["email", "password", "key"]
+
+    def validate(self, data):
+        email = data.get("email", None)
+        new_password = data.get("password", None)
+        key = data.get("key", None)
+
+        user = User.objects.get(email=email)
+        verify = UserVerify.objects.filter(
+            phone_number=user.phone_number, key=key
+        ).first()
+
+        if verify is None:
+            raise serializers.ValidationError("유효하지 않은 요청입니다.")
+
+        user = (
+            User.objects.filter(phone_number=verify.phone_number)
+            .select_for_update()
+            .first()
+        )
+
+        user.set_password(new_password)
+        del new_password
+        user.save()
+
+        return user
+
+
 class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -201,3 +235,17 @@ class UserVerifyConfirmViews(APIView):
         verify.save()
 
         return Response({"Success"}, status=201)
+
+
+class UserFindPasswordViews(APIView):
+
+    serializer_class = UserFindPasswordSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data
+
+        return Response(UserSerializer(user).data, status=201)
