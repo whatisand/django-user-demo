@@ -10,12 +10,6 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError("User must have user email")
 
-        if not UserVerify.objects.filter(
-            phone_number=phone_number, verified=True
-        ).exists():
-            # TODO: 전화번호 인증 로직 개선 필요
-            raise ValueError("전화번호 인증이 필요합니다.")
-
         user = self.model(
             name=name,
             email=self.normalize_email(email),
