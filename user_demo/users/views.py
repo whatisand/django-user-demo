@@ -1,4 +1,6 @@
 import random
+from datetime import datetime, timedelta
+from uuid import uuid4
 
 from django.core.validators import RegexValidator
 from rest_framework import serializers
@@ -18,10 +20,15 @@ from users.models import User, UserVerify
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # 전화번호 인증 후 발급받은 토큰
+    token = serializers.CharField(write_only=True)
+
     def create(self, validated_data):
 
         if not UserVerify.objects.filter(
-            phone_number=validated_data.get("phone_number")
+            phone_number=validated_data.get("phone_number"),
+            token=validated_data.get("token"),
+            is_verified=True,
         ).exists():
             raise serializers.ValidationError("전화번호 인증이 필요합니다.")
 
@@ -37,7 +44,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "name", "nickname", "phone_number", "password"]
+        fields = [
+            "id",
+            "email",
+            "name",
+            "nickname",
+            "phone_number",
+            "password",
+            "token",
+        ]
         extra_kwargs = {
             "password": {"write_only": True},
         }
@@ -68,26 +83,38 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
 class UserVerifySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserVerify
-        fields = ["key", "phone_number", "verified"]
+        fields = ["key", "phone_number", "is_verified", "token"]
         extra_kwargs = {
             "key": {"write_only": True},
-            "verified": {"read_only": True},
+            "is_verified": {"read_only": True},
+            "token": {"read_only": True},
         }
 
-    def validate(self, data):
+    def validate(self, data) -> UserVerify:
         phone_number = data.get("phone_number")
         key = data.get("key")
 
         try:
             verify = (
                 UserVerify.objects.filter(
-                    phone_number=phone_number, key=key, verified=False
+                    phone_number=phone_number,
+                    key=key,
+                    is_verified=False,
+                    created_at__gt=datetime.now()
+                    - timedelta(minutes=5),  # 5분 이내 생성된 것만 체크
                 )
                 .select_for_update()
                 .get()
             )
         except UserVerify.DoesNotExist:
             raise serializers.ValidationError("올바른 정보를 입력해주세요.")
+
+        token = str(uuid4()).replace("-", "")
+
+        verify.is_verified = True
+        verify.verified_at = datetime.now()
+        verify.token = token
+        verify.save()
 
         return verify
 
@@ -144,29 +171,30 @@ class UserLoginSerializer(serializers.Serializer):
 class UserFindPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
-    key = serializers.IntegerField()
+    token = serializers.CharField()
 
     class Meta:
-        fields = ["email", "password", "key"]
+        fields = ["email", "password", "token"]
 
     def validate(self, data):
         email = data.get("email", None)
         new_password = data.get("password", None)
-        key = data.get("key", None)
+        token = data.get("token", None)
 
-        user = User.objects.get(email=email)
-        verify = UserVerify.objects.filter(
-            phone_number=user.phone_number, key=key
-        ).first()
+        user = User.objects.filter(email=email).select_for_update().first()
 
-        if verify is None:
-            raise serializers.ValidationError("유효하지 않은 요청입니다.")
-
-        user = (
-            User.objects.filter(phone_number=verify.phone_number)
+        verify = (
+            UserVerify.objects.filter(
+                phone_number=user.phone_number,
+                token=token,
+                is_verified=True,
+            )
             .select_for_update()
             .first()
         )
+
+        if verify is None:
+            raise serializers.ValidationError("전화번호 인증이 필요합니다.")
 
         user.set_password(new_password)
         del new_password
@@ -223,18 +251,15 @@ class UserVerifyConfirmViews(APIView):
     serializer_class = UserVerifySerializer
 
     def post(self, request: Request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
+        serializer = self.serializer_class(data=request.data)
+
+        # 시리얼라이저에서 요청에 대한 인증 여부 검사, 토큰까지 반환하여 전달
+        serializer.is_valid(raise_exception=True)
+        # 성공시 성공한 verify 반환
         verify = serializer.validated_data
 
-        # TODO: 요청 제한시간 검사해야 함
-        # TODO: 요청 횟수 제한 필요한가?
-        verify.verified = True
-
-        verify.save()
-
-        return Response({"Success"}, status=201)
+        return Response(serializer.data, status=201)
 
 
 class UserFindPasswordViews(APIView):

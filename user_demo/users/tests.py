@@ -37,7 +37,7 @@ class UsersTestCase(TestCase):
         verify = (
             UserVerify.objects.filter(
                 phone_number="01046222847",
-                verified=False,
+                is_verified=False,
             )
             .order_by("created_at")
             .first()
@@ -76,8 +76,39 @@ class UsersTestCase(TestCase):
         )
 
         self.assertEqual(res.status_code, 201)
+        data = res.json()
+        token = data.get("token", None)
+        self.assertIsNotNone(token)
 
-        return verify
+        verified_verify = UserVerify.objects.filter(
+            phone_number="01046222847", token=token
+        ).get()
+
+        return verified_verify
+
+    def test_이미_인증된_인증_번호로_전화번호_인증을_시도한다(self):
+        verify = self.test_전화번호_인증을_요청한다()
+        res = self.client.post(
+            path="/users/verify/confirm",
+            data={
+                "phone_number": verify.phone_number,
+                "key": verify.key,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 201)
+
+        second_res = self.client.post(
+            path="/users/verify/confirm",
+            data={
+                "phone_number": verify.phone_number,
+                "key": verify.key,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(second_res.status_code, 400)
 
     def test_인증된_전화번호로_회원가입을_한다(self):
         verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
@@ -91,6 +122,7 @@ class UsersTestCase(TestCase):
                 "nickname": "test_nickname",
                 "name": "test_name",
                 "phone_number": verify.phone_number,
+                "token": verify.token,
             },
             content_type="application/json",
         )
@@ -101,6 +133,8 @@ class UsersTestCase(TestCase):
         user = User.objects.get(email=data["email"])
 
         self.assertIsNotNone(user)
+        self.assertEqual(user.email, "andy@gggg.com")
+        self.assertEqual(user.phone_number, verify.phone_number)
 
         return user
 
@@ -247,7 +281,7 @@ class UsersTestCase(TestCase):
             data={
                 "email": user.email,
                 "password": new_password,
-                "key": verify.key,
+                "token": verify.token,
             },
             content_type="application/json",
         )
