@@ -13,6 +13,21 @@ class UserSerializer(serializers.ModelSerializer):
     # 전화번호 인증 후 발급받은 토큰
     token = serializers.CharField(write_only=True)
 
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "name",
+            "nickname",
+            "phone_number",
+            "password",
+            "token",
+        ]
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
+
     def create(self, validated_data):
 
         if not UserVerify.objects.filter(
@@ -32,21 +47,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         return user
 
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "email",
-            "name",
-            "nickname",
-            "phone_number",
-            "password",
-            "token",
-        ]
-        extra_kwargs = {
-            "password": {"write_only": True},
-        }
-
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,14 +60,14 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
     )
     phone_number = serializers.CharField(validators=[phoneNumberRegex])
 
+    class Meta:
+        model = UserVerify
+        fields = ["phone_number"]
+
     def create(self, validated_data):
         validated_data["phone_number"] = validated_data["phone_number"].replace("-", "")
         validated_data["key"] = random.randint(100000, 999999)
         return super().create(validated_data)
-
-    class Meta:
-        model = UserVerify
-        fields = ["phone_number"]
 
 
 class UserVerifySerializer(serializers.ModelSerializer):
