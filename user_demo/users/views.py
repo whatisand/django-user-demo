@@ -20,10 +20,15 @@ from users.models import User, UserVerify
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # 전화번호 인증 후 발급받은 토큰
+    token = serializers.CharField(write_only=True)
+
     def create(self, validated_data):
 
         if not UserVerify.objects.filter(
-            phone_number=validated_data.get("phone_number")
+            phone_number=validated_data.get("phone_number"),
+            token=validated_data.get("token"),
+            is_verified=True,
         ).exists():
             raise serializers.ValidationError("전화번호 인증이 필요합니다.")
 
@@ -39,7 +44,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "name", "nickname", "phone_number", "password"]
+        fields = [
+            "id",
+            "email",
+            "name",
+            "nickname",
+            "phone_number",
+            "password",
+            "token",
+        ]
         extra_kwargs = {
             "password": {"write_only": True},
         }
