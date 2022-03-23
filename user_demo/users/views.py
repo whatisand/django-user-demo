@@ -68,26 +68,38 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
 class UserVerifySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserVerify
-        fields = ["key", "phone_number", "verified"]
+        fields = ["key", "phone_number", "is_verified", "token"]
         extra_kwargs = {
             "key": {"write_only": True},
-            "verified": {"read_only": True},
+            "is_verified": {"read_only": True},
+            "token": {"read_only": True},
         }
 
-    def validate(self, data):
+    def validate(self, data) -> UserVerify:
         phone_number = data.get("phone_number")
         key = data.get("key")
 
         try:
             verify = (
                 UserVerify.objects.filter(
-                    phone_number=phone_number, key=key, verified=False
+                    phone_number=phone_number,
+                    key=key,
+                    is_verified=False,
+                    created_at__gt=datetime.now()
+                    - timedelta(minutes=5),  # 5분 이내 생성된 것만 체크
                 )
                 .select_for_update()
                 .get()
             )
         except UserVerify.DoesNotExist:
             raise serializers.ValidationError("올바른 정보를 입력해주세요.")
+
+        token = str(uuid4()).replace("-", "")
+
+        verify.is_verified = True
+        verify.verified_at = datetime.now()
+        verify.token = token
+        verify.save()
 
         return verify
 
@@ -223,18 +235,15 @@ class UserVerifyConfirmViews(APIView):
     serializer_class = UserVerifySerializer
 
     def post(self, request: Request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
+        serializer = self.serializer_class(data=request.data)
+
+        # 시리얼라이저에서 요청에 대한 인증 여부 검사, 토큰까지 반환하여 전달
+        serializer.is_valid(raise_exception=True)
+        # 성공시 성공한 verify 반환
         verify = serializer.validated_data
 
-        # TODO: 요청 제한시간 검사해야 함
-        # TODO: 요청 횟수 제한 필요한가?
-        verify.verified = True
-
-        verify.save()
-
-        return Response({"Success"}, status=201)
+        return Response(serializer.data, status=201)
 
 
 class UserFindPasswordViews(APIView):
