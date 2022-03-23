@@ -37,7 +37,7 @@ class UsersTestCase(TestCase):
         verify = (
             UserVerify.objects.filter(
                 phone_number="01046222847",
-                verified=False,
+                is_verified=False,
             )
             .order_by("created_at")
             .first()
@@ -76,6 +76,15 @@ class UsersTestCase(TestCase):
         )
 
         self.assertEqual(res.status_code, 201)
+        data = res.json()
+        token = data.get("token", None)
+        self.assertIsNotNone(token)
+
+        verified_verify = UserVerify.objects.filter(
+            phone_number="01046222847", token=token
+        ).get()
+
+        return verified_verify
 
         return verify
 
@@ -91,6 +100,7 @@ class UsersTestCase(TestCase):
                 "nickname": "test_nickname",
                 "name": "test_name",
                 "phone_number": verify.phone_number,
+                "token": verify.token,
             },
             content_type="application/json",
         )
@@ -101,6 +111,8 @@ class UsersTestCase(TestCase):
         user = User.objects.get(email=data["email"])
 
         self.assertIsNotNone(user)
+        self.assertEqual(user.email, "andy@gggg.com")
+        self.assertEqual(user.phone_number, verify.phone_number)
 
         return user
 
