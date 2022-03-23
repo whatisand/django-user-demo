@@ -86,7 +86,29 @@ class UsersTestCase(TestCase):
 
         return verified_verify
 
-        return verify
+    def test_이미_인증된_인증_번호로_전화번호_인증을_시도한다(self):
+        verify = self.test_전화번호_인증을_요청한다()
+        res = self.client.post(
+            path="/users/verify/confirm",
+            data={
+                "phone_number": verify.phone_number,
+                "key": verify.key,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 201)
+
+        second_res = self.client.post(
+            path="/users/verify/confirm",
+            data={
+                "phone_number": verify.phone_number,
+                "key": verify.key,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(second_res.status_code, 400)
 
     def test_인증된_전화번호로_회원가입을_한다(self):
         verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
