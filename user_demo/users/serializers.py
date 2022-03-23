@@ -29,14 +29,16 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-
+        # 입력받은 전화번호와, 발급된 토큰이 일치하는 것이 있는지 확인
         if not UserVerify.objects.filter(
             phone_number=validated_data.get("phone_number"),
             token=validated_data.get("token"),
             is_verified=True,
         ).exists():
+            # 일치하는 전화번호 인증이 없으면 에러 반환
             raise serializers.ValidationError("전화번호 인증이 필요합니다.")
 
+        # 일치하는 것이 있으면 유저 생성 진행
         user = User.objects.create_user(
             email=validated_data.get("email"),
             nickname=validated_data.get("nickname"),
@@ -55,6 +57,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 
 class UserVerifyCreateSerializer(serializers.ModelSerializer):
+    # 전화번호 형식 벨리데이터
     phoneNumberRegex = RegexValidator(
         regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})$"
     )
@@ -65,7 +68,9 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
         fields = ["phone_number"]
 
     def create(self, validated_data):
+        # db 형식에 일관적으로 저장하기 위해 하이픈(-) 제거
         validated_data["phone_number"] = validated_data["phone_number"].replace("-", "")
+        # 6자리 숫자 key 렌덤으로 생성하여 데이터에 저장
         validated_data["key"] = random.randint(100000, 999999)
         return super().create(validated_data)
 
@@ -75,7 +80,7 @@ class UserVerifySerializer(serializers.ModelSerializer):
         model = UserVerify
         fields = ["key", "phone_number", "is_verified", "token"]
         extra_kwargs = {
-            "key": {"write_only": True},
+            "key": {"write_only": True},  # 반환값에서 key는 반환하지 않도록 설정
             "is_verified": {"read_only": True},
             "token": {"read_only": True},
         }
@@ -99,6 +104,7 @@ class UserVerifySerializer(serializers.ModelSerializer):
         except UserVerify.DoesNotExist:
             raise serializers.ValidationError("올바른 정보를 입력해주세요.")
 
+        # 전화번호 인증 성공시 발급할 토큰 생성
         token = str(uuid4()).replace("-", "")
 
         verify.is_verified = True
@@ -110,6 +116,10 @@ class UserVerifySerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
+    """
+    (이메일, 전화번호)중 하나와 (비밀번호, 전화번호 인증 키)중 하나를 이용해 로그인이 가능한지 확인합니다.
+    로그인이 가능하면 user를 반환합니다.
+    """
 
     email = serializers.EmailField(required=False)
     phone_number = serializers.CharField(required=False)
@@ -159,6 +169,13 @@ class UserLoginSerializer(serializers.Serializer):
 
 
 class UserFindPasswordSerializer(serializers.Serializer):
+    """
+    이메일, 변경하고자 하는 비밀번호, 전화번호 인증 토큰을 요청받아,
+    토큰이 유효하면 해당 유저의 비밀번호를 변경하고자 하는 비밀번호로 변경합니다.
+
+    시리얼라이저 validation을 진행하면 모든 로직이 진행되고 user를 반환합니다.
+    """
+
     email = serializers.EmailField()
     password = serializers.CharField()
     token = serializers.CharField()
