@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.db import transaction
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from users.models import User, UserVerify
 from datetime import datetime, timedelta
@@ -45,6 +46,18 @@ def is_verified_token(token: str) -> bool:
     ).exists()
 
     return is_verified
+
+
+def get_current_user(request):
+    authorization_header = request.headers.get("Authorization")
+    if not authorization_header:
+        return None
+
+    scheme, _, param = authorization_header.partition(" ")
+
+    user_id = AccessToken(param).get("user_id")
+
+    return User.objects.get(id=user_id)
 
 
 def get_user_by_token(token: str):
