@@ -78,35 +78,6 @@ class UserVerifySerializer(serializers.ModelSerializer):
             "token": {"read_only": True},
         }
 
-    def validate(self, data) -> UserVerify:
-        phone_number = data.get("phone_number")
-        key = data.get("key")
-
-        try:
-            verify = (
-                UserVerify.objects.filter(
-                    phone_number=phone_number,
-                    key=key,
-                    is_verified=False,
-                    created_at__gt=datetime.now()
-                    - timedelta(minutes=5),  # 5분 이내 생성된 것만 체크
-                )
-                .select_for_update()
-                .get()
-            )
-        except UserVerify.DoesNotExist:
-            raise serializers.ValidationError("올바른 정보를 입력해주세요.")
-
-        # 전화번호 인증 성공시 발급할 토큰 생성
-        token = str(uuid4()).replace("-", "")
-
-        verify.is_verified = True
-        verify.verified_at = datetime.now()
-        verify.token = token
-        verify.save()
-
-        return verify
-
 
 class UserLoginSerializer(serializers.Serializer):
     """

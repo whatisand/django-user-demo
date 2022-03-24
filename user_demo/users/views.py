@@ -71,13 +71,13 @@ class UserVerifyConfirmViews(APIView):
     def post(self, request: Request, *args, **kwargs):
 
         serializer = self.serializer_class(data=request.data)
-
-        # 시리얼라이저에서 요청에 대한 인증 여부 검사, 토큰까지 반환하여 전달
         serializer.is_valid(raise_exception=True)
         # 성공시 성공한 verify 반환
-        verify = serializer.validated_data
+        created_verify = utils.get_verify_token_by_key_phone_number(
+            **serializer.validated_data
+        )
 
-        return Response(serializer.data, status=201)
+        return Response(UserVerifySerializer(created_verify).data, status=201)
 
 
 class UserFindPasswordViews(APIView):
