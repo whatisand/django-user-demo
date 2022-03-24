@@ -90,11 +90,14 @@ class UserVerifyConfirmViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         # 성공시 성공한 verify 반환
-        created_verify = utils.get_verify_token_by_key_phone_number(
+        confirmed_verify = utils.get_verify_token_by_key_phone_number(
             **serializer.validated_data
         )
 
-        return Response(UserVerifySerializer(created_verify).data, status=201)
+        if confirmed_verify is None:
+            return Response(UserVerifySerializer(confirmed_verify).data, status=401)
+
+        return Response(UserVerifySerializer(confirmed_verify).data, status=201)
 
 
 class UserFindPasswordViews(APIView):

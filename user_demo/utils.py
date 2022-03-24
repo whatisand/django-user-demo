@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.db import transaction
 from django.contrib.auth import authenticate
+from django.utils import timezone
 
 from users.models import User, UserVerify
 from datetime import datetime, timedelta
@@ -82,12 +83,12 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
     """
     verify = (
         UserVerify.objects.filter(
-            phone_number=phone_number,
+            phone_number=phone_number.replace("-", ""),
             key=key,
             is_verified=False,
-            created_at__gt=datetime.now() - timedelta(minutes=5),
+            created_at__gt=timezone.now() - timedelta(minutes=5),
         )
-        .select_for_update(nowait=True)
+        .select_for_update()
         .first()
     )
 
@@ -97,7 +98,7 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
     token = str(uuid4()).replace("-", "")
 
     verify.is_verified = True
-    verify.verified_at = datetime.now()
+    verify.verified_at = timezone.now()
     verify.token = token
     verify.save()
 
