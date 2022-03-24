@@ -112,6 +112,8 @@ class UserFindPasswordViews(APIView):
         try:
             utils.set_password_by_token(**serializer.validated_data)
         except PermissionError:
-            return Response(status=403)
+            return Response(status=401)
+        except LookupError:
+            return Response(status=401)
 
         return Response(status=201)

@@ -108,14 +108,18 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
 def set_password_by_token(email, password, token):
     user = User.objects.filter(email=email).first()
 
+    if user is None:
+        raise LookupError("User Not Found")
+
     verify = UserVerify.objects.filter(
         phone_number=user.phone_number,
         token=token,
         is_verified=True,
+        is_used=False,
     ).first()
 
     if verify is None:
-        raise PermissionError
+        raise PermissionError("전화번호 인증이 필요합니다.")
 
     user.set_password(password)
     del password
