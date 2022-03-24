@@ -40,14 +40,16 @@ class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
 
         return Response(UserSerializer(user).data, status=201)
 
-    def retrieve(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return Response(data={"message: Login Required"}, status=401)
 
-        user = User.objects.filter(email=request.user.email).get()
+class UserMeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args, **kwargs):
+
+        user = utils.get_current_user(request)
 
         if user is None:
-            return Response(data={"message: User not exist"}, status=404)
+            return Response(data={"detail": "User not exist"}, status=404)
 
         return Response(UserSerializer(user).data, status=200)
 
