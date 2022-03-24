@@ -18,12 +18,26 @@ from users.serializers import (
     UserVerifyCreateSerializer,
     UserFindPasswordSerializer,
 )
+import utils
 
 
 class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     # permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if not utils.is_verified_token(serializer.validated_data.get("token")):
+            # 입력받은 전화번호 인증 토큰이 유효하지 않은 경우
+            return Response(status=401)
+
+        # 토큰이 유효하면 유저 생성 진행
+        user = utils.create_user(serializer.validated_data)
+
+        return Response(UserSerializer(user).data, status=201)
 
     def retrieve(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -45,10 +59,14 @@ class UserLoginViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data
+        user = utils.get_user_by_login_data(serializer.validated_data)
+
+        if user is None:
+            return Response(status=401)
+
         login(request, user)
 
-        return Response(serializer.data, status=202)
+        return Response(status=202)
 
 
 class UserVerifyCreateViews(APIView):
@@ -59,9 +77,9 @@ class UserVerifyCreateViews(APIView):
         # TODO: 인증 문자 보내는 부분 추가
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            verify = serializer.create(serializer.validated_data)
-
-        return Response(self.serializer_class(verify).data, status=201)
+            created_verify = utils.create_verify(**serializer.validated_data)
+            print(created_verify.key)
+            return Response(status=201)
 
 
 class UserVerifyConfirmViews(APIView):
@@ -70,13 +88,16 @@ class UserVerifyConfirmViews(APIView):
     def post(self, request: Request, *args, **kwargs):
 
         serializer = self.serializer_class(data=request.data)
-
-        # 시리얼라이저에서 요청에 대한 인증 여부 검사, 토큰까지 반환하여 전달
         serializer.is_valid(raise_exception=True)
         # 성공시 성공한 verify 반환
-        verify = serializer.validated_data
+        confirmed_verify = utils.get_verify_token_by_key_phone_number(
+            **serializer.validated_data
+        )
 
-        return Response(serializer.data, status=201)
+        if confirmed_verify is None:
+            return Response(UserVerifySerializer(confirmed_verify).data, status=401)
+
+        return Response(UserVerifySerializer(confirmed_verify).data, status=201)
 
 
 class UserFindPasswordViews(APIView):
@@ -88,6 +109,11 @@ class UserFindPasswordViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data
+        try:
+            utils.set_password_by_token(**serializer.validated_data)
+        except PermissionError:
+            return Response(status=401)
+        except LookupError:
+            return Response(status=401)
 
-        return Response(UserSerializer(user).data, status=201)
+        return Response(status=201)
