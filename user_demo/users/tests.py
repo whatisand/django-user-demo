@@ -62,7 +62,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
 
     def test_유효한_인증_번호로_전화번호_인증을_시도한다(self):
         verify = self.test_전화번호_인증을_요청한다()
@@ -108,7 +108,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(second_res.status_code, 400)
+        self.assertEqual(second_res.status_code, 401)
 
     def test_인증된_전화번호로_회원가입을_한다(self):
         verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
@@ -161,7 +161,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
 
     def test_가입한_정보로_로그인을_한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
@@ -200,7 +200,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
 
     def test_전화번호와_비밀번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
@@ -228,7 +228,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
 
     def test_전화번호와_인증번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
@@ -256,7 +256,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
 
     def test_이메일과_인증번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
@@ -313,4 +313,4 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.status_code, 401)
