@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import (
     UserViewSet,
     UserVerifyCreateViews,
@@ -35,5 +36,6 @@ urlpatterns = [
     path("users/verify", UserVerifyCreateViews.as_view()),
     path("users/verify/confirm", UserVerifyConfirmViews.as_view()),
     path("login", UserLoginViews.as_view()),
+    path("login/refresh", TokenRefreshView.as_view()),
     path("find-password", UserFindPasswordViews.as_view()),
 ]
