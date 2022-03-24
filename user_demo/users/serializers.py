@@ -28,27 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
             "password": {"write_only": True},
         }
 
-    def create(self, validated_data):
-        # 입력받은 전화번호와, 발급된 토큰이 일치하는 것이 있는지 확인
-        if not UserVerify.objects.filter(
-            phone_number=validated_data.get("phone_number"),
-            token=validated_data.get("token"),
-            is_verified=True,
-        ).exists():
-            # 일치하는 전화번호 인증이 없으면 에러 반환
-            raise serializers.ValidationError("전화번호 인증이 필요합니다.")
-
-        # 일치하는 것이 있으면 유저 생성 진행
-        user = User.objects.create_user(
-            email=validated_data.get("email"),
-            nickname=validated_data.get("nickname"),
-            name=validated_data.get("name"),
-            phone_number=validated_data.get("phone_number"),
-            password=validated_data.get("password"),
-        )
-
-        return user
-
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:

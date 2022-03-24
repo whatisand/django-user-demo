@@ -26,6 +26,19 @@ class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
     serializer_class = UserSerializer
     # permission_classes = [IsAuthenticated]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if not utils.is_verified_token(serializer.validated_data.get("token")):
+            # 입력받은 전화번호 인증 토큰이 유효하지 않은 경우
+            return Response(status=401)
+
+        # 토큰이 유효하면 유저 생성 진행
+        user = utils.create_user(serializer.validated_data)
+
+        return Response(UserSerializer(user).data, status=201)
+
     def retrieve(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response(data={"message: Login Required"}, status=401)

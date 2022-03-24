@@ -53,8 +53,18 @@ def get_user_by_token(token: str):
     return user
 
 
-def create_user_by_validated_data(validated_data):
-    ...
+def create_user(validated_data) -> User:
+
+    # TODO: 일부 비즈니스 로직이 모델에 있어서 마음에 들지 않음
+    user = User.objects.create_user(
+        email=validated_data.get("email"),
+        nickname=validated_data.get("nickname"),
+        name=validated_data.get("name"),
+        phone_number=validated_data.get("phone_number"),
+        password=validated_data.get("password"),
+    )
+
+    return user
 
 
 def get_user_by_phone_number(phone_number):
