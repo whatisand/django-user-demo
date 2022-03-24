@@ -308,7 +308,7 @@ class UsersTestCase(TestCase):
             data={
                 "email": user.email,
                 "password": new_password,
-                "key": "1111",
+                "token": "1111",
             },
             content_type="application/json",
         )
