@@ -67,13 +67,6 @@ class UserVerifyCreateSerializer(serializers.ModelSerializer):
         model = UserVerify
         fields = ["phone_number"]
 
-    def create(self, validated_data):
-        # db 형식에 일관적으로 저장하기 위해 하이픈(-) 제거
-        validated_data["phone_number"] = validated_data["phone_number"].replace("-", "")
-        # 6자리 숫자 key 렌덤으로 생성하여 데이터에 저장
-        validated_data["key"] = random.randint(100000, 999999)
-        return super().create(validated_data)
-
 
 class UserVerifySerializer(serializers.ModelSerializer):
     class Meta:

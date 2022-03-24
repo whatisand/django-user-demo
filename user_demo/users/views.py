@@ -18,6 +18,7 @@ from users.serializers import (
     UserVerifyCreateSerializer,
     UserFindPasswordSerializer,
 )
+import utils
 
 
 class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
@@ -59,9 +60,9 @@ class UserVerifyCreateViews(APIView):
         # TODO: 인증 문자 보내는 부분 추가
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            verify = serializer.create(serializer.validated_data)
-
-        return Response(self.serializer_class(verify).data, status=201)
+            created_verify = utils.create_verify(**serializer.validated_data)
+            print(created_verify.key)
+            return Response(status=201)
 
 
 class UserVerifyConfirmViews(APIView):
