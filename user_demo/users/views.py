@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import login, logout
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from users.models import User, UserVerify
 from users.serializers import (
@@ -64,9 +65,13 @@ class UserLoginViews(APIView):
         if user is None:
             return Response(status=401)
 
-        login(request, user)
+        access_token = AccessToken.for_user(user)
+        refresh_token = RefreshToken.for_user(user)
+        # login(request, user)
 
-        return Response(status=202)
+        data = {"access_token": str(access_token), "refresh_token": str(refresh_token)}
+
+        return Response(data=data, status=202)
 
 
 class UserVerifyCreateViews(APIView):
