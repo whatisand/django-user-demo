@@ -93,44 +93,6 @@ class UserLoginSerializer(serializers.Serializer):
     class Meta:
         fields = ["email", "password", "phone_number", "key"]
 
-    def validate(self, data):
-        email = data.get("email", None)
-        password = data.get("password", None)
-        phone_number = data.get("phone_number", None)
-        key = data.get("key", None)
-
-        # TODO: 리펙토링
-
-        if email is None and phone_number is not None:
-            phone_number = data.get("phone_number").replace("-", "")
-            user = User.objects.filter(phone_number=phone_number).first()
-            email = user.email
-
-        if phone_number is not None and key is not None:
-            phone_number = data.get("phone_number").replace("-", "")
-            verify = UserVerify.objects.filter(
-                phone_number=phone_number, key=key
-            ).first()
-            if verify is not None:
-                user = User.objects.filter(phone_number=verify.phone_number).first()
-                return user
-
-        if email is not None and key is not None:
-            user = User.objects.get(email=email)
-            verify = UserVerify.objects.filter(
-                phone_number=user.phone_number, key=key
-            ).first()
-            if verify is not None:
-                user = User.objects.filter(phone_number=verify.phone_number).first()
-                return user
-
-        user = authenticate(username=email, password=password)
-
-        if user is None:
-            raise serializers.ValidationError("유저 정보가 없습니다.")
-
-        return user
-
 
 class UserFindPasswordSerializer(serializers.Serializer):
     """

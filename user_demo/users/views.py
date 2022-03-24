@@ -46,10 +46,14 @@ class UserLoginViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data
+        user = utils.get_user_by_login_data(serializer.validated_data)
+
+        if user is None:
+            return Response(status=401)
+
         login(request, user)
 
-        return Response(serializer.data, status=202)
+        return Response(status=202)
 
 
 class UserVerifyCreateViews(APIView):

@@ -2,6 +2,7 @@ import random
 from uuid import uuid4
 
 from django.db import transaction
+from django.contrib.auth import authenticate
 
 from users.models import User, UserVerify
 from datetime import datetime, timedelta
@@ -110,3 +111,47 @@ def set_password_by_token(email, password, token):
     user.save()
 
     return user
+
+
+def get_user_by_login_data(data):
+    """
+    입력받은 정보를 이용해 authenticate를 진행하고 User를 반환합니다.
+
+    :param data: validated data
+    :return:
+    """
+    email = data.get("email", None)
+    password = data.get("password", None)
+    phone_number = data.get("phone_number", None)
+    key = data.get("key", None)
+
+    # TODO: 리펙토링
+
+    # 전화번호와 비밀번호로 로그인 하는 경우, 전화번호로 이메일 찾기
+    if email is None and phone_number is not None:
+        phone_number = data.get("phone_number").replace("-", "")
+        user = get_user_by_phone_number(phone_number)
+        email = user.email
+
+    # 이메일, 패스워드 있는 경우 authenticate를 통해 유저 확인
+    if email is not None and password is not None:
+        user = authenticate(username=email, password=password)
+        return user
+
+    # 전화번호와 전화번호 인증 키로 로그인 하는 경우
+    if phone_number is not None and key is not None:
+        phone_number = data.get("phone_number").replace("-", "")
+        verify = get_verify_token_by_key_phone_number(phone_number, key)
+        if verify is not None:
+            user = get_user_by_token(verify.token)
+            return user
+
+    # 이메일과 전화번호 인증 키로 로그인 하는 경우
+    if email is not None and key is not None:
+        user = User.objects.get(email=email)
+        verify = get_verify_token_by_key_phone_number(user.phone_number, key)
+        if verify is not None:
+            user = get_user_by_token(verify.token)
+            return user
+
+    return None
