@@ -1,9 +1,4 @@
-import random
-from datetime import datetime, timedelta
-from uuid import uuid4
-
 from django.core.validators import RegexValidator
-from django.contrib.auth import authenticate, login, logout
 from rest_framework import serializers
 
 from users.models import User, UserVerify
