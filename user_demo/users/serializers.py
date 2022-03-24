@@ -170,34 +170,8 @@ class UserFindPasswordSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField()
-    password = serializers.CharField()
-    token = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    token = serializers.CharField(write_only=True)
 
     class Meta:
         fields = ["email", "password", "token"]
-
-    def validate(self, data):
-        email = data.get("email", None)
-        new_password = data.get("password", None)
-        token = data.get("token", None)
-
-        user = User.objects.filter(email=email).select_for_update().first()
-
-        verify = (
-            UserVerify.objects.filter(
-                phone_number=user.phone_number,
-                token=token,
-                is_verified=True,
-            )
-            .select_for_update()
-            .first()
-        )
-
-        if verify is None:
-            raise serializers.ValidationError("전화번호 인증이 필요합니다.")
-
-        user.set_password(new_password)
-        del new_password
-        user.save()
-
-        return user

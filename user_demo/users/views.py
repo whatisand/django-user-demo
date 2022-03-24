@@ -89,6 +89,9 @@ class UserFindPasswordViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data
+        try:
+            utils.set_password_by_token(**serializer.validated_data)
+        except PermissionError:
+            return Response(status=403)
 
-        return Response(UserSerializer(user).data, status=201)
+        return Response(status=201)
