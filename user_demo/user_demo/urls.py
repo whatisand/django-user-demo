@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import (
-    UserViewSet,
+    UserView,
     UserMeView,
     UserVerifyCreateViews,
     UserLoginViews,
@@ -28,7 +28,7 @@ from users.views import (
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
     path("admin", admin.site.urls),
-    path("users", UserViewSet.as_view()),
+    path("users", UserView.as_view()),
     path("users/me", UserMeView.as_view()),
     #     "get": "retrieve",
     #     "patch": "update",

@@ -1,14 +1,7 @@
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import (
-    GenericAPIView,
-    CreateAPIView,
-    RetrieveDestroyAPIView,
-)
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import login, logout
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from users.models import User, UserVerify
@@ -22,10 +15,8 @@ from users.serializers import (
 import utils
 
 
-class UserViewSet(CreateAPIView, RetrieveDestroyAPIView, GenericAPIView):
-    queryset = User.objects.all()
+class UserView(APIView):
     serializer_class = UserSerializer
-    # permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
