@@ -33,6 +33,8 @@ def create_verify(phone_number: str) -> UserVerify:
     # 6자리 숫자 key 렌덤으로 생성하여 데이터에 저장
     key = random.randint(100000, 999999)
 
+    send_sms_verify_key(phone_number, key)
+
     user_verify = UserVerify(phone_number=phone_number, key=key)
     user_verify.save()
 
@@ -48,18 +50,6 @@ def is_verified_token(token: str) -> bool:
     return is_verified
 
 
-def get_current_user(request):
-    authorization_header = request.headers.get("Authorization")
-    if not authorization_header:
-        return None
-
-    scheme, _, param = authorization_header.partition(" ")
-
-    user_id = AccessToken(param).get("user_id")
-
-    return User.objects.get(id=user_id)
-
-
 def get_user_by_token(token: str):
     verify = UserVerify.objects.filter(token=token, is_verified=True).first()
     user = User.objects.filter(phone_number=verify.phone_number).first()
@@ -67,28 +57,11 @@ def get_user_by_token(token: str):
     return user
 
 
-def create_user(validated_data) -> User:
-
-    # TODO: 일부 비즈니스 로직이 모델에 있어서 마음에 들지 않음
-    user = User.objects.create_user(
-        email=validated_data.get("email"),
-        nickname=validated_data.get("nickname"),
-        name=validated_data.get("name"),
-        phone_number=validated_data.get("phone_number"),
-        password=validated_data.get("password"),
-    )
-
-    return user
-
-
-def get_user_by_phone_number(phone_number):
-    return User.objects.filter(phone_number=phone_number).first()
-
-
 @transaction.atomic()
 def get_verify_token_by_key_phone_number(phone_number: str, key: int):
     """
     전화번호와 key를 이용해 생성된 인증을 컨펌하는 메소드입니다. 인증 성공시 token을 생성하여 저장합니다.
+    이미 토큰이 발급된 경우 다시 발급이 불가능합니다.
 
     :param phone_number: 전화번호
     :param key: SMS 발송된 Key
@@ -118,7 +91,36 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
     return verify
 
 
-def set_password_by_token(email, password, token):
+def get_current_user(request):
+    authorization_header = request.headers.get("Authorization")
+    if not authorization_header:
+        return None
+
+    scheme, _, param = authorization_header.partition(" ")
+
+    user_id = AccessToken(param).get("user_id")
+
+    return User.objects.get(id=user_id)
+
+
+def create_user(validated_data) -> User:
+
+    # TODO: 일부 비즈니스 로직이 모델에 있어서 마음에 들지 않음
+    user = User.objects.create_user(
+        email=validated_data.get("email"),
+        nickname=validated_data.get("nickname"),
+        name=validated_data.get("name"),
+        phone_number=validated_data.get("phone_number"),
+        password=validated_data.get("password"),
+    )
+
+    return user
+
+
+def get_user_by_phone_number(phone_number):
+    return User.objects.filter(phone_number=phone_number).first()
+
+
 def set_password_by_token(email, new_password, token):
     """
     전화번호 인증 후 받은 토큰과 새로운 비밀번호를 입력받아 이메일을 변경합니다.
@@ -155,7 +157,7 @@ def get_user_by_login_data(data):
     입력받은 정보를 이용해 authenticate를 진행하고 User를 반환합니다.
 
     :param data: validated data
-    :return:
+    :return: User 또는 None
     """
     email = data.get("email", None)
     password = data.get("password", None)
