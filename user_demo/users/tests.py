@@ -158,11 +158,15 @@ class UsersTestCase(TestCase):
 
         self.assertEqual(res.status_code, 401)
 
+    def test_인증된_전화번호로_필수_정보_없이_회원가입을_한다(self):
+        verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
+
         res = self.client.post(
-            path="/login",
+            path="/users",
             data={
-                "email": user.email,
-                "password": "fail",
+                "password": "123123",
+                "phone_number": verify.phone_number,
+                "token": verify.token,
             },
             content_type="application/json",
         )
