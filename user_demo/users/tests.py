@@ -27,7 +27,7 @@ class UsersTestCase(TestCase):
     def test_전화번호_인증을_요청한다(self):
         phone_number = "010-4622-2847"
         res = self.client.post(
-            path="/users/verify",
+            path="/phone-verify",
             data={
                 "phone_number": phone_number,
             },
@@ -48,7 +48,7 @@ class UsersTestCase(TestCase):
 
     def test_질못된_전화번호_형식으로_전화번호_인증을_요청한다(self):
         res = self.client.post(
-            path="/users/verify",
+            path="/phone-verify",
             data={
                 "phone_number": "000",
             },
@@ -58,7 +58,7 @@ class UsersTestCase(TestCase):
 
     def test_잘못된_인증_번호로_전화번호_인증을_시도한다(self):
         res = self.client.post(
-            path="/users/verify/confirm",
+            path="/phone-verify/confirm",
             data={"phone_number": "010-4622-2847", "key": "123123"},
             content_type="application/json",
         )
@@ -68,7 +68,7 @@ class UsersTestCase(TestCase):
     def test_유효한_인증_번호로_전화번호_인증을_시도한다(self):
         verify = self.test_전화번호_인증을_요청한다()
         res = self.client.post(
-            path="/users/verify/confirm",
+            path="/phone-verify/confirm",
             data={
                 "phone_number": verify.phone_number,
                 "key": verify.key,
@@ -90,7 +90,7 @@ class UsersTestCase(TestCase):
     def test_이미_인증된_인증_번호로_전화번호_인증을_시도한다(self):
         verify = self.test_전화번호_인증을_요청한다()
         res = self.client.post(
-            path="/users/verify/confirm",
+            path="/phone-verify/confirm",
             data={
                 "phone_number": verify.phone_number,
                 "key": verify.key,
@@ -101,7 +101,7 @@ class UsersTestCase(TestCase):
         self.assertEqual(res.status_code, 200)
 
         second_res = self.client.post(
-            path="/users/verify/confirm",
+            path="/phone-verify/confirm",
             data={
                 "phone_number": verify.phone_number,
                 "key": verify.key,
