@@ -139,8 +139,25 @@ class UsersTestCase(TestCase):
 
         return user
 
-    def test_잘못된_정보로_로그인을_한다(self):
-        user = self.test_인증된_전화번호로_회원가입을_한다()
+    def test_인증된_전화번호와_다른_전화번호로_회원가입을_한다(self):
+        verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
+
+        res = self.client.post(
+            path="/users",
+            data={
+                "email": "andy@gggg.com",
+                "password": "123123",
+                "check_password": "123123",
+                "nickname": "test_nickname",
+                "name": "test_name",
+                "phone_number": "010-1234-5432",
+                "token": verify.token,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(res.status_code, 401)
+
         res = self.client.post(
             path="/login",
             data={
