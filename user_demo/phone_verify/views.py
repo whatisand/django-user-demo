@@ -6,7 +6,7 @@ from phone_verify.serializers import (
     UserVerifySerializer,
     UserVerifyCreateSerializer,
 )
-import utils
+import services
 
 
 class UserVerifyCreateViews(APIView):
@@ -16,7 +16,7 @@ class UserVerifyCreateViews(APIView):
         # TODO: 인증 문자 보내는 부분 추가
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            created_verify = utils.create_verify(**serializer.validated_data)
+            created_verify = services.create_verify(**serializer.validated_data)
             print(created_verify.key)
             return Response(status=201)
 
@@ -29,7 +29,7 @@ class UserVerifyConfirmViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         # 성공시 성공한 verify 반환
-        confirmed_verify = utils.get_verify_token_by_key_phone_number(
+        confirmed_verify = services.get_verify_token_by_key_phone_number(
             **serializer.validated_data
         )
 

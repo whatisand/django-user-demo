@@ -9,7 +9,7 @@ from users.serializers import (
     UserLoginSerializer,
     UserFindPasswordSerializer,
 )
-import utils
+import services
 
 
 class UserView(APIView):
@@ -19,7 +19,7 @@ class UserView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if not utils.is_verified_token(
+        if not services.is_verified_token(
             phone_number=serializer.validated_data.get("phone_number"),
             token=serializer.validated_data.get("token"),
         ):
@@ -27,7 +27,7 @@ class UserView(APIView):
             return Response(data={"detail": "전화번호 인증이 필요합니다."}, status=401)
 
         # 토큰이 유효하면 유저 생성 진행
-        user = utils.create_user(serializer.validated_data)
+        user = services.create_user(serializer.validated_data)
 
         return Response(UserSerializer(user).data, status=201)
 
@@ -37,7 +37,7 @@ class UserMeView(APIView):
 
     def get(self, request: Request, *args, **kwargs):
 
-        user = utils.get_current_user(request)
+        user = services.get_current_user(request)
 
         if user is None:
             return Response(data={"detail": "로그인이 필요합니다."}, status=403)
@@ -53,7 +53,7 @@ class UserLoginViews(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = utils.get_user_by_login_data(serializer.validated_data)
+        user = services.get_user_by_login_data(serializer.validated_data)
 
         if user is None:
             return Response(data={"detail": "User not exist"}, status=401)
@@ -76,7 +76,7 @@ class UserFindPasswordViews(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            utils.set_password_by_token(
+            services.set_password_by_token(
                 email=serializer.validated_data.get("email"),
                 new_password=serializer.validated_data.get("password"),
                 token=serializer.validated_data.get("token"),
