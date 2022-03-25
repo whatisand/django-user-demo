@@ -76,7 +76,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 200)
         data = res.json()
         token = data.get("token", None)
         self.assertIsNotNone(token)
@@ -98,7 +98,7 @@ class UsersTestCase(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 200)
 
         second_res = self.client.post(
             path="/users/verify/confirm",
