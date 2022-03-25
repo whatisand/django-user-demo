@@ -14,27 +14,24 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
+
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import (
-    UserViewSet,
-    UserVerifyCreateViews,
+    UserView,
+    UserMeView,
     UserLoginViews,
-    UserVerifyConfirmViews,
     UserFindPasswordViews,
 )
 
+from phone_verify.views import UserVerifyCreateViews, UserVerifyConfirmViews
+
 urlpatterns = [
-    path("auth/", include("rest_framework.urls")),
     path("admin", admin.site.urls),
-    path("users", UserViewSet.as_view()),
-    # path("users/<str:pk>", UserViewSet.as_view({
-    #     "get": "retrieve",
-    #     "patch": "update",
-    #     "delete": "destroy",
-    # })),
-    path("users/verify", UserVerifyCreateViews.as_view()),
-    path("users/verify/confirm", UserVerifyConfirmViews.as_view()),
+    path("users", UserView.as_view()),
+    path("users/me", UserMeView.as_view()),
+    path("phone-verify", UserVerifyCreateViews.as_view()),
+    path("phone-verify/confirm", UserVerifyConfirmViews.as_view()),
     path("login", UserLoginViews.as_view()),
     path("login/refresh", TokenRefreshView.as_view()),
     path("find-password", UserFindPasswordViews.as_view()),
