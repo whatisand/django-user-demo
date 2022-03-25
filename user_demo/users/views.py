@@ -108,7 +108,11 @@ class UserFindPasswordViews(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            utils.set_password_by_token(**serializer.validated_data)
+            utils.set_password_by_token(
+                email=serializer.validated_data.get("email"),
+                new_password=serializer.validated_data.get("password"),
+                token=serializer.validated_data.get("token"),
+            )
         except PermissionError:
             return Response(status=401)
         except LookupError:

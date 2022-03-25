@@ -119,6 +119,15 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
 
 
 def set_password_by_token(email, password, token):
+def set_password_by_token(email, new_password, token):
+    """
+    전화번호 인증 후 받은 토큰과 새로운 비밀번호를 입력받아 이메일을 변경합니다.
+
+    :param email: 유저 이메일
+    :param new_password: 변경하고자 하는 비밀번호
+    :param token: 전화번호 인증 후 발급받은 토큰
+    :return:
+    """
     user = User.objects.filter(email=email).first()
 
     if user is None:
@@ -134,8 +143,8 @@ def set_password_by_token(email, password, token):
     if verify is None:
         raise PermissionError("전화번호 인증이 필요합니다.")
 
-    user.set_password(password)
-    del password
+    user.set_password(new_password)
+    del new_password
     user.save()
 
     return user
