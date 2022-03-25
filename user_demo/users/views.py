@@ -27,7 +27,7 @@ class UserView(APIView):
             token=serializer.validated_data.get("token"),
         ):
             # 입력받은 전화번호 인증 토큰이 유효하지 않은 경우
-            return Response(status=401)
+            return Response(data={"detail": "전화번호 인증이 필요합니다."}, status=401)
 
         # 토큰이 유효하면 유저 생성 진행
         user = utils.create_user(serializer.validated_data)
@@ -43,7 +43,7 @@ class UserMeView(APIView):
         user = utils.get_current_user(request)
 
         if user is None:
-            return Response(data={"detail": "User not exist"}, status=404)
+            return Response(data={"detail": "로그인이 필요합니다."}, status=403)
 
         return Response(UserSerializer(user).data, status=200)
 
@@ -59,7 +59,7 @@ class UserLoginViews(APIView):
         user = utils.get_user_by_login_data(serializer.validated_data)
 
         if user is None:
-            return Response(status=401)
+            return Response(data={"detail": "User not exist"}, status=401)
 
         access_token = AccessToken.for_user(user)
         refresh_token = RefreshToken.for_user(user)
@@ -96,7 +96,7 @@ class UserVerifyConfirmViews(APIView):
         )
 
         if confirmed_verify is None:
-            return Response(UserVerifySerializer(confirmed_verify).data, status=401)
+            return Response(data={"detail": "유효하지 않은 인증번호입니다."}, status=401)
 
         return Response(UserVerifySerializer(confirmed_verify).data, status=200)
 
@@ -117,8 +117,8 @@ class UserFindPasswordViews(APIView):
                 token=serializer.validated_data.get("token"),
             )
         except PermissionError:
-            return Response(status=401)
+            return Response(data={"detail": "전화번호 인증이 필요합니다."}, status=401)
         except LookupError:
-            return Response(status=401)
+            return Response(data={"detail": "전화번호 인증이 필요합니다."}, status=401)
 
         return Response(status=201)
