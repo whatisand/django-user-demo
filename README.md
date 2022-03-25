@@ -70,6 +70,10 @@ Ubuntu 20.04 기준
   $ pip install --upgrade pip
   $ pip install -r requirements.txt
   ```
+- DB 마이그레이션 진행
+  ```
+  $ python3 manage.py migrate
+  ```
 - 서버 실행
   ```
   $ python3 manage.py runserver 0:8000
@@ -104,7 +108,7 @@ Ubuntu 20.04 기준
 
 root: /api/v1
 
-## /users/verify
+## /phone-verify
 ### POST: 전화번호 인증번호 전송 요청
 
 Request Body 
@@ -123,7 +127,7 @@ Response
 No Data
 ```
 
-## /users/verify/confirm
+## /phone-verify/confirm
 ### POST: 전화번호와 전송된 key로 전화번호 인증 및 전화번호 인증 토큰 발급
 
 Request Body
