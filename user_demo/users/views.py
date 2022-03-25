@@ -22,7 +22,10 @@ class UserView(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if not utils.is_verified_token(serializer.validated_data.get("token")):
+        if not utils.is_verified_token(
+            phone_number=serializer.validated_data.get("phone_number"),
+            token=serializer.validated_data.get("token"),
+        ):
             # 입력받은 전화번호 인증 토큰이 유효하지 않은 경우
             return Response(status=401)
 

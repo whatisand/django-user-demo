@@ -41,9 +41,10 @@ def create_verify(phone_number: str) -> UserVerify:
     return user_verify
 
 
-def is_verified_token(token: str) -> bool:
+def is_verified_token(phone_number: str, token: str) -> bool:
     is_verified = UserVerify.objects.filter(
         token=token,
+        phone_number=phone_number,
         is_verified=True,
     ).exists()
 
