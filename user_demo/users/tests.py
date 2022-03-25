@@ -22,7 +22,6 @@ class UsersTestCase(TestCase):
         )
 
         self.assertEqual(res.status_code, 400)
-        data = res.json()
 
     def test_전화번호_인증을_요청한다(self):
         phone_number = "010-4622-2847"
@@ -288,7 +287,7 @@ class UsersTestCase(TestCase):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_전화번호와_인증번호로_로그인한다(self):
+    def test_전화번호와_유효한_인증번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
         verify = self.test_전화번호_인증을_요청한다()
         res = self.client.post(
@@ -316,9 +315,9 @@ class UsersTestCase(TestCase):
 
         self.assertEqual(res.status_code, 401)
 
-    def test_이메일과_인증번호로_로그인한다(self):
+    def test_이메일과_유효한_인증번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
-        verify = self.test_유효한_인증_번호로_전화번호_인증을_시도한다()
+        verify = self.test_전화번호_인증을_요청한다()
         res = self.client.post(
             path="/login",
             data={
