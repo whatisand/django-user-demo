@@ -95,7 +95,7 @@ class UserVerifyConfirmViews(APIView):
         if confirmed_verify is None:
             return Response(UserVerifySerializer(confirmed_verify).data, status=401)
 
-        return Response(UserVerifySerializer(confirmed_verify).data, status=201)
+        return Response(UserVerifySerializer(confirmed_verify).data, status=200)
 
 
 class UserFindPasswordViews(APIView):
