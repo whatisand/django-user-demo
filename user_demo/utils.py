@@ -6,7 +6,8 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
-from users.models import User, UserVerify
+from users.models import User
+from phone_verify.models import UserVerify
 from datetime import datetime, timedelta
 
 

@@ -20,11 +20,11 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import (
     UserView,
     UserMeView,
-    UserVerifyCreateViews,
     UserLoginViews,
-    UserVerifyConfirmViews,
     UserFindPasswordViews,
 )
+
+from phone_verify.views import UserVerifyCreateViews, UserVerifyConfirmViews
 
 urlpatterns = [
     path("admin", admin.site.urls),
