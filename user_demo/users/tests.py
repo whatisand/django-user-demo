@@ -1,6 +1,7 @@
 from django.test import TestCase
 
 from users.models import User, UserVerify
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 # Create your tests here.
 
@@ -178,15 +179,26 @@ class UsersTestCase(TestCase):
         return_user = User.objects.get(email=user.email)
         return return_user
 
-    def test_내_정보를_조회한다(self):
-        user = self.test_가입한_정보로_로그인을_한다()
-        self.client.force_login(user=user)
+    def test_로그인_안한_유저가_내_정보를_조회한다(self):
         res = self.client.get(
-            path="/users",
+            path="/users/me",
             content_type="application/json",
         )
 
+        self.assertEqual(res.status_code, 401)
+
+    def test_내_정보를_조회한다(self):
+        user = self.test_가입한_정보로_로그인을_한다()
+        res = self.client.get(
+            path="/users/me",
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {str(AccessToken.for_user(user))}",
+        )
+
+        data = res.json()
+
         self.assertEqual(res.status_code, 200)
+        self.assertEqual(data.get("email"), user.email)
 
     def test_전화번호와_잘못된_비밀번호로_로그인한다(self):
         user = self.test_인증된_전화번호로_회원가입을_한다()
