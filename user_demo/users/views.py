@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
-from users.models import User, UserVerify
 from users.serializers import (
     UserSerializer,
     UserVerifySerializer,
