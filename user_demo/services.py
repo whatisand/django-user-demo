@@ -50,9 +50,24 @@ def is_verified_token(phone_number: str, token: str) -> bool:
     return is_verified
 
 
+@transaction.atomic()
 def get_user_by_token(token: str):
-    verify = UserVerify.objects.filter(token=token, is_verified=True).first()
+    """
+    전화번호 인증받은 토큰으로 가입된 유저가 있으면 해당 유저를 반환합니다.
+    반환 후 토큰은 사용된 것으로 체크됩니다.
+    :param token: 전화번호 인증 후 발급받은 토큰
+    :return: 유저 또는 None(유저 없을시)
+    """
+    verify = (
+        PhoneVerify.objects.filter(token=token, is_verified=True, is_used=False)
+        .select_for_update()
+        .first()
+    )
     user = User.objects.filter(phone_number=verify.phone_number).first()
+
+    # 해당 토큰을 사용한 것으로 간주하여 재사용 불가하게 설정
+    verify.is_used = True
+    verify.save()
 
     return user
 
