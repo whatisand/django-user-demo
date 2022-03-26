@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from users.models import User
-from phone_verify.models import UserVerify
+from phone_verify.models import PhoneVerify
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 # Create your tests here.
@@ -36,7 +36,7 @@ class UsersTestCase(TestCase):
 
         self.assertEqual(res.status_code, 201)
         verify = (
-            UserVerify.objects.filter(
+            PhoneVerify.objects.filter(
                 phone_number="01046222847",
                 is_verified=False,
             )
@@ -81,7 +81,7 @@ class UsersTestCase(TestCase):
         token = data.get("token", None)
         self.assertIsNotNone(token)
 
-        verified_verify = UserVerify.objects.filter(
+        verified_verify = PhoneVerify.objects.filter(
             phone_number="01046222847", token=token
         ).get()
 

@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 
 
-class UserVerify(models.Model):
+class PhoneVerify(models.Model):
     phoneNumberRegex = RegexValidator(
         regex=r"^01([0|1|6|7|8|9]?)-?([0-9]{3,4})-?([0-9]{4})"
     )
@@ -16,6 +16,6 @@ class UserVerify(models.Model):
     is_used = models.BooleanField(default=False)  # 전화번호 인증 받은 후 발급받은 토큰으로 API 콜 1회만 가능
 
     class Meta:
-        db_table = "user_verify"
+        db_table = "phone_verify"
         verbose_name = "인증"
         verbose_name_plural = "유저 인증"
