@@ -24,7 +24,7 @@ from users.views import (
     UserFindPasswordViews,
 )
 
-from phone_verify.views import UserVerifyCreateViews, UserVerifyConfirmViews
+from phone_verify.views import PhoneVerifyCreateViews, PhoneVerifyConfirmViews
 
 urlpatterns = [
     path("admin", admin.site.urls),

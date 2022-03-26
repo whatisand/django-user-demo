@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from users.models import User
-from phone_verify.models import UserVerify
+from phone_verify.models import PhoneVerify
 from datetime import datetime, timedelta
 
 
@@ -28,7 +28,7 @@ def send_sms_verify_key(phone_number: str, key: int):
     return True
 
 
-def create_verify(phone_number: str) -> UserVerify:
+def create_verify(phone_number: str) -> PhoneVerify:
     # db 형식에 일관적으로 저장하기 위해 하이픈(-) 제거
     phone_number = phone_number.replace("-", "")
     # 6자리 숫자 key 렌덤으로 생성하여 데이터에 저장
@@ -36,14 +36,14 @@ def create_verify(phone_number: str) -> UserVerify:
 
     send_sms_verify_key(phone_number, key)
 
-    user_verify = UserVerify(phone_number=phone_number, key=key)
+    user_verify = PhoneVerify(phone_number=phone_number, key=key)
     user_verify.save()
 
     return user_verify
 
 
 def is_verified_token(phone_number: str, token: str) -> bool:
-    is_verified = UserVerify.objects.filter(
+    is_verified = PhoneVerify.objects.filter(
         token=token,
         phone_number=phone_number,
         is_verified=True,
@@ -70,7 +70,7 @@ def get_verify_token_by_key_phone_number(phone_number: str, key: int):
     :return UserVerify: UserVerify 모델 객체
     """
     verify = (
-        UserVerify.objects.filter(
+        PhoneVerify.objects.filter(
             phone_number=phone_number.replace("-", ""),
             key=key,
             is_verified=False,
@@ -137,7 +137,7 @@ def set_password_by_token(email, new_password, token):
     if user is None:
         raise LookupError("User Not Found")
 
-    verify = UserVerify.objects.filter(
+    verify = PhoneVerify.objects.filter(
         phone_number=user.phone_number,
         token=token,
         is_verified=True,

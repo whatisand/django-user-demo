@@ -3,26 +3,27 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from phone_verify.serializers import (
-    UserVerifySerializer,
-    UserVerifyCreateSerializer,
+    PhoneVerifySerializer,
+    PhoneVerifyCreateSerializer,
 )
 import services
 
 
-class UserVerifyCreateViews(APIView):
-    serializer_class = UserVerifyCreateSerializer
+class PhoneVerifyCreateViews(APIView):
+    serializer_class = PhoneVerifyCreateSerializer
 
     def post(self, request: Request, *args, **kwargs):
-        # TODO: 인증 문자 보내는 부분 추가
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            created_verify = services.create_verify(**serializer.validated_data)
+            created_verify = services.create_verify(
+                phone_number=serializer.validated_data.get("phone_number")
+            )
             print(created_verify.key)
             return Response(status=201)
 
 
-class UserVerifyConfirmViews(APIView):
-    serializer_class = UserVerifySerializer
+class PhoneVerifyConfirmViews(APIView):
+    serializer_class = PhoneVerifySerializer
 
     def post(self, request: Request, *args, **kwargs):
 
@@ -36,4 +37,4 @@ class UserVerifyConfirmViews(APIView):
         if confirmed_verify is None:
             return Response(data={"detail": "유효하지 않은 인증번호입니다."}, status=401)
 
-        return Response(UserVerifySerializer(confirmed_verify).data, status=200)
+        return Response(PhoneVerifySerializer(confirmed_verify).data, status=200)
