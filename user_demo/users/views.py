@@ -29,6 +29,9 @@ class UserView(APIView):
         # 토큰이 유효하면 유저 생성 진행
         user = services.create_user(serializer.validated_data)
 
+        # 유저 생성 후, 토큰 사용한 것으로 체크
+        services.set_used_token(serializer.validated_data.get("token"))
+
         return Response(UserSerializer(user).data, status=201)
 
 
