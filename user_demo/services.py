@@ -44,17 +44,41 @@ def create_verify(phone_number: str) -> PhoneVerify:
 
 def is_verified_token(phone_number: str, token: str) -> bool:
     is_verified = PhoneVerify.objects.filter(
-        token=token,
-        phone_number=phone_number,
-        is_verified=True,
+        token=token, phone_number=phone_number, is_verified=True, is_used=False
     ).exists()
 
     return is_verified
 
 
+def set_used_token(token: str):
+    """
+    입력받은 전화번호 인증 토큰을 사용한 것으로 체크합니다. 사용 여부와 무관하게 사용한 것으로 체크합니다.
+    :param token: 전화번호 인증 후 발급받은 토큰
+    :return: 없음
+    """
+    verify = PhoneVerify.objects.filter(token=token).first()
+    verify.is_used = True
+    verify.save()
+
+
+@transaction.atomic()
 def get_user_by_token(token: str):
-    verify = UserVerify.objects.filter(token=token, is_verified=True).first()
+    """
+    전화번호 인증받은 토큰으로 가입된 유저가 있으면 해당 유저를 반환합니다.
+    반환 후 토큰은 사용된 것으로 체크됩니다.
+    :param token: 전화번호 인증 후 발급받은 토큰
+    :return: 유저 또는 None(유저 없을시)
+    """
+    verify = (
+        PhoneVerify.objects.filter(token=token, is_verified=True, is_used=False)
+        .select_for_update()
+        .first()
+    )
     user = User.objects.filter(phone_number=verify.phone_number).first()
+
+    # 해당 토큰을 사용한 것으로 간주하여 재사용 불가하게 설정
+    verify.is_used = True
+    verify.save()
 
     return user
 
