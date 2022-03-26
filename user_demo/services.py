@@ -50,6 +50,17 @@ def is_verified_token(phone_number: str, token: str) -> bool:
     return is_verified
 
 
+def set_used_token(token: str):
+    """
+    입력받은 전화번호 인증 토큰을 사용한 것으로 체크합니다. 사용 여부와 무관하게 사용한 것으로 체크합니다.
+    :param token: 전화번호 인증 후 발급받은 토큰
+    :return: 없음
+    """
+    verify = PhoneVerify.objects.filter(token=token).first()
+    verify.is_used = True
+    verify.save()
+
+
 @transaction.atomic()
 def get_user_by_token(token: str):
     """
